@@ -4,13 +4,10 @@ import random
 import matplotlib.pyplot as plt
 import evaluate as eva
 
-# flame.txt
-# Jain_cluster=2.txt
-# Aggregation_cluster=7.txt
-# Spiral_cluster=3.txt
-# Pathbased_cluster=3.txt
+# Test.txt
 
-data_path = "data/flame.txt"
+
+data_path = "data/Test.txt"
 k = 2  # 类别个数
 
 
