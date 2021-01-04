@@ -55,15 +55,15 @@ def center(data, clusterRes, k):
     :param k: 类别个数
     :return: 计算得到的质心
     """
-    clunew = []
+    centerNow = []
     for i in range(k):
         # 计算每个组的新质心
         idx = np.where(clusterRes == i)
         sum = data[idx].sum(axis=0)
         avg_sum = sum / len(data[idx])
-        clunew.append(avg_sum)
-    clunew = np.asarray(clunew)
-    return clunew[:, 0:2]
+        centerNow.append(avg_sum)
+    centerNow = np.asarray(centerNow)
+    return centerNow[:, 0:2]
 
 
 def classfy(data, centerPoints, k):
@@ -76,9 +76,9 @@ def classfy(data, centerPoints, k):
     """
     clulist = cal_dis(data, centerPoints, k)
     clusterRes = divide(data, clulist)
-    clunew = center(data, clusterRes, k)
-    err = clunew - centerPoints
-    return err, clunew, k, clusterRes
+    centerNow = center(data, clusterRes, k)
+    err = centerNow - centerPoints
+    return err, centerNow, k, clusterRes
 
 
 def plotRes(data, clusterRes, clusterNum):
@@ -107,15 +107,15 @@ if __name__ == '__main__':
     data, rows = load_data()
     index = np.asarray(data[:, 4])
     index = np.asarray(list(map(int, index - 1)))
-    plotRes(data, index, k)  # 可视化
-    centerPoints = random.sample(data[:, 0:2].tolist(), k)  # 随机取质心
-    centerPoints = np.asarray(centerPoints)
-    err, clunew, k, clusterRes = classfy(data, centerPoints, k)
-    while np.any(abs(err) > 0.0005):
-        # print(clunew)
-        err, clunew, k, clusterRes = classfy(data, clunew, k)  # 未满足收敛条件，继续聚类
+    plotRes(data, index, k)  # 数据可视化
+    centerPoints = np.asarray(random.sample(data[:, 0:2].tolist(), k)) # 随机取k个质心
+    err, centerNow, k, clusterRes = classfy(data, centerPoints, k)
 
-    clulist = cal_dis(data, clunew, k)
+    while np.any(abs(err) > 0.0005):
+        # print(centerNow)
+        err, centerNow, k, clusterRes = classfy(data, centerNow, k)  # 未满足收敛条件，继续聚类
+
+    clulist = cal_dis(data, centerNow, k)
     clusterResult = divide(data, clulist)
 
     # 用于评价聚类结果的库不能正常工作
