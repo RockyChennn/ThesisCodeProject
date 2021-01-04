@@ -1,27 +1,23 @@
 import numpy as np
-import math as m
+import math
 import random
 import matplotlib.pyplot as plt
-import evaluate as eva
+# import evaluate as eva
 
-# Test.txt
-
-
-data_path = "data/Test.txt"
-k = 2  # 类别个数
-
+data_path = "data/Iris.txt"
+k = 3  # 类别个数
 
 # 导入数据
 def load_data():
-    points = np.loadtxt(data_path, delimiter='\t')
-    return points
+    points = np.loadtxt(data_path, delimiter=' ')
+    rows = np.shape(points)[1] - 1
+    return points, rows
 
-
-def cal_dis(data, clu, k):
+def cal_dis(data, centerPoints, k):
     """
     计算质点与聚类中心的距离
     :param data: 样本点
-    :param clu:  质点集合
+    :param centerPoints: 质点集合
     :param k: 类别个数
     :return: 质心与样本点距离矩阵
     """
@@ -30,7 +26,10 @@ def cal_dis(data, clu, k):
         dis.append([])
         for j in range(k):
             # 扩展性不足，按维度来算
-            dis[i].append(m.sqrt((data[i, 0] - clu[j, 0]) ** 2 + (data[i, 1] - clu[j, 1]) ** 2))
+            distance = 0
+            for m in range(rows):
+                distance += (data[i, m] - centerPoints[j, m]) ** 2
+            dis[i].append(math.sqrt(distance))
     return np.asarray(dis)
 
 
@@ -64,21 +63,21 @@ def center(data, clusterRes, k):
         avg_sum = sum / len(data[idx])
         clunew.append(avg_sum)
     clunew = np.asarray(clunew)
-    return clunew[:, 0: 2]
+    return clunew[:, 0:2]
 
 
-def classfy(data, clu, k):
+def classfy(data, centerPoints, k):
     """
     迭代收敛更新质心
     :param data: 样本集合
-    :param clu: 质心集合
+    :param centerPoints: 质心集合
     :param k: 类别个数
     :return: 误差， 新质心
     """
-    clulist = cal_dis(data, clu, k)
+    clulist = cal_dis(data, centerPoints, k)
     clusterRes = divide(data, clulist)
     clunew = center(data, clusterRes, k)
-    err = clunew - clu
+    err = clunew - centerPoints
     return err, clunew, k, clusterRes
 
 
@@ -94,7 +93,7 @@ def plotRes(data, clusterRes, clusterNum):
     scatterColors = ['red', 'blue', 'green', 'yellow', 'black', 'purple', 'orange', 'brown']
     for i in range(clusterNum):
         color = scatterColors[i % len(scatterColors)]
-        x1 = [];
+        x1 = []
         y1 = []
         for j in range(nPoints):
             if clusterRes[j] == i:
@@ -105,13 +104,13 @@ def plotRes(data, clusterRes, clusterNum):
 
 
 if __name__ == '__main__':
-    data = load_data()
-    index = np.asarray(data[:,2])
+    data, rows = load_data()
+    index = np.asarray(data[:, 4])
     index = np.asarray(list(map(int, index - 1)))
-    plotRes(data, index, k) # 可视化
-    clu = random.sample(data[:, 0:2].tolist(), k)  # 随机取质心
-    clu = np.asarray(clu)
-    err, clunew, k, clusterRes = classfy(data, clu, k)
+    plotRes(data, index, k)  # 可视化
+    centerPoints = random.sample(data[:, 0:2].tolist(), k)  # 随机取质心
+    centerPoints = np.asarray(centerPoints)
+    err, clunew, k, clusterRes = classfy(data, centerPoints, k)
     while np.any(abs(err) > 0.0005):
         # print(clunew)
         err, clunew, k, clusterRes = classfy(data, clunew, k)  # 未满足收敛条件，继续聚类
@@ -124,4 +123,4 @@ if __name__ == '__main__':
     # print(nmi, acc, purity)
 
     nmi, acc, purity = 1, 3, 2
-    plotRes(data, clusterResult, k) # 可视化
+    plotRes(data, clusterResult, k)  # 可视化
