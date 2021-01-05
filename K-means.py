@@ -2,16 +2,17 @@ import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
-# import evaluate as eva
 
 data_path = "data/Iris.txt"
 k = 3  # 类别个数
+
 
 # 导入数据
 def load_data():
     points = np.loadtxt(data_path, delimiter=' ')
     rows = np.shape(points)[1] - 1
     return points, rows
+
 
 def cal_dis(data, centerPoints, k):
     """
@@ -29,7 +30,7 @@ def cal_dis(data, centerPoints, k):
             distance = 0
             for m in range(rows):
                 distance += (data[i, m] - centerPoints[j, m]) ** 2
-            dis[i].append(math.sqrt(distance))
+            dis[i].append(math.floor(math.sqrt(distance) * 100) / 100)
     return np.asarray(dis)
 
 
@@ -63,7 +64,7 @@ def center(data, clusterRes, k):
         avg_sum = sum / len(data[idx])
         centerNow.append(avg_sum)
     centerNow = np.asarray(centerNow)
-    return centerNow[:, 0:2]
+    return centerNow[:, 0: rows]
 
 
 def classfy(data, centerPoints, k):
@@ -103,12 +104,35 @@ def plotRes(data, clusterRes, clusterNum):
     plt.show()
 
 
+def evaluate(clusterResult, index):
+    total = len(index)
+    group = []
+    groupNum = []
+    groupRecord = []
+    for idx in set(index):
+        currentRange = clusterResult[np.where(index == idx)]
+        numInRange = set(currentRange)
+        count = 0
+        nowIndex = 0
+        for num in numInRange:
+            nowCount = len(currentRange[np.where(currentRange == num)])
+            groupRecord.append([idx, num, nowCount])
+            if nowCount >= count:
+                count = nowCount
+                nowIndex = num
+        group.append(count)
+        groupNum.append(nowIndex)
+    accuracy = math.floor(np.sum(group) / total * 10000) / 100
+    print("聚类结果组别：", groupNum)
+    # 类别重复的情况下，提示问题
+    if len(set(groupNum)) < k:
+        print("数据记录", groupRecord)
+    return accuracy
+
+
 if __name__ == '__main__':
     data, rows = load_data()
-    index = np.asarray(data[:, 4])
-    index = np.asarray(list(map(int, index - 1)))
-    plotRes(data, index, k)  # 数据可视化
-    centerPoints = np.asarray(random.sample(data[:, 0:2].tolist(), k)) # 随机取k个质心
+    centerPoints = np.asarray(random.sample(data[:, 0: rows].tolist(), k))  # 随机取k个质心
     err, centerNow, k, clusterRes = classfy(data, centerPoints, k)
 
     while np.any(abs(err) > 0.0005):
@@ -117,10 +141,7 @@ if __name__ == '__main__':
 
     clulist = cal_dis(data, centerNow, k)
     clusterResult = divide(data, clulist)
+    index = np.asarray(list(map(int, np.asarray(data[:, rows]) - 1)))
+    print("聚类准确率：", evaluate(clusterResult, index), "%")
 
-    # 用于评价聚类结果的库不能正常工作
-    # nmi, acc, purity = eva.evaluators(clusterResult, np.asarray(data[:, 2]))
-    # print(nmi, acc, purity)
-
-    nmi, acc, purity = 1, 3, 2
-    plotRes(data, clusterResult, k)  # 可视化
+    # plotRes(data, clusterResult, k)  # 可视化
