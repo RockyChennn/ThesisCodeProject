@@ -4,6 +4,12 @@ import re
 import random
 import matplotlib.pyplot as plt
 
+# 以下包为生成excel所用
+import xlwt
+import datetime
+import os
+import shutil
+
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
@@ -140,6 +146,24 @@ def plotWCSS(data):
     plt.show()
 
 
+def recordResult():
+    workbook = xlwt.Workbook(encoding='utf-8')
+    worksheet = workbook.add_sheet(data_name)
+    nowday = str(datetime.datetime.now()).replace(":", "-")[5:19]
+    file_name = data_name + '(' + nowday + ").xls"
+    style = xlwt.XFStyle()
+    style.num_format_str = 'M/D/YY'  # Other options: D-MMM-YY, D-MMM, MMM-YY, h:mm, h:mm:ss, h:mm, h:mm:ss, M/D/YY h:mm, mm:ss, [h]:mm:ss, mm:ss.0
+    worksheet.write(0, 0, datetime.datetime.now(), style)
+    workbook.save(file_name)
+    aa = os.getcwd()
+    # 获取当前文件路径
+    file_path = os.path.join(aa, file_name)
+    # 移动文件到E盘地方
+    target_path = "./result"
+    # 使用shutil包的move方法移动文件
+    shutil.move(file_path, target_path)
+
+
 def evaluate(clusterResult, index):
     total = len(index)
     group = []
@@ -179,6 +203,6 @@ if __name__ == '__main__':
     clusterResult = divide(data, distanceMatrix)
     print("聚类准确率：", evaluate(clusterResult, index), "%")
     plotWCSS(data_wcss)
-
+    recordResult()
     # plotRes(data, index)  # 原数据分布
     # plotRes(data, clusterResult)  # 聚类结果可视化
