@@ -3,24 +3,28 @@ import math
 import re
 import random
 import matplotlib.pyplot as plt
+
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
-# data_path = "data/Test=2.txt"
-# data_path = "data/Glass=6.txt"
-# data_path = "data/Iris=3.txt"
-# data_path = "data/Landsat=7.txt"
-# data_path = "data/Leaf=36.txt"
-data_path = "data/Libras=15.txt"
-# data_path = "data/LungCancer=3.txt"
-# data_path = "data/Seeds=3.txt"
-# data_path = "data/Sonar=2.txt"
-# data_path = "data/UserKnowledgeModeling=4.txt"
-# data_path = "data/Wine=3.txt"
+data_set = ["data/Test=2.txt",
+            "data/Glass=6.txt",
+            "data/Iris=3.txt",
+            "data/Landsat=7.txt",
+            "data/Leaf=36.txt",
+            "data/Libras=15.txt",
+            "data/LungCancer=3.txt",
+            "data/Seeds=3.txt",
+            "data/Sonar=2.txt",
+            "data/UserKnowledgeModeling=4.txt",
+            "data/Wine=3.txt"]
+data_path = data_set[2]
+
 data_name = re.compile('\w+').findall(data_path)[1]
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
 print("数据集名称：", data_name)
 print("数据集类别数：", k)
+
 
 # 导入数据
 def load_data():
