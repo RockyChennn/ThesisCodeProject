@@ -35,6 +35,7 @@ print("数据集类别数：", k)
 # 导入数据
 def load_data():
     points = np.loadtxt(data_path, delimiter=" ")
+    print("实例个数：", len(points))
     rows = np.shape(points)[1] - 1
     return points, rows
 
@@ -146,14 +147,25 @@ def plotWCSS(data):
     plt.show()
 
 
-def recordResult():
+def recordResult(accuracy):
+    """
+    记录数据
+    :return: 在 result 目录下生成 excel 文件
+    """
     workbook = xlwt.Workbook(encoding='utf-8')
     worksheet = workbook.add_sheet(data_name)
+
+    worksheet.write(0, 0, "数据集名称")
+    worksheet.write(0, 1, data_name)
+    worksheet.write(1, 0, "类别数")
+    worksheet.write(1, 1, k)
+    worksheet.write(2, 0, "实例个数")
+    worksheet.write(2, 1, len(data))
+    worksheet.write(3, 0, "聚类准确率")
+    worksheet.write(3, 1, accuracy)
+
     nowday = str(datetime.datetime.now()).replace(":", "-")[5:19]
     file_name = data_name + '(' + nowday + ").xls"
-    style = xlwt.XFStyle()
-    style.num_format_str = 'M/D/YY'  # Other options: D-MMM-YY, D-MMM, MMM-YY, h:mm, h:mm:ss, h:mm, h:mm:ss, M/D/YY h:mm, mm:ss, [h]:mm:ss, mm:ss.0
-    worksheet.write(0, 0, datetime.datetime.now(), style)
     workbook.save(file_name)
     aa = os.getcwd()
     # 获取当前文件路径
@@ -187,8 +199,25 @@ def evaluate(clusterResult, index):
     # 类别重复的情况下，提示问题
     if len(set(groupNum)) < k:
         print("纠错-聚类过程记录", groupRecord)
+        # accuracy = findResult(groupRecord)
+    # recordResult(accuracy) # 记录聚类结果
     return accuracy
 
+
+def findResult(record):
+    """
+    动态规划，根据过程记录得到最佳可行解
+    :param record: 数组，过程记录
+    :return:最佳可行解
+    """
+    maplist = {}
+    for i in range(k):
+        maplist[i] = {}
+    for item in range(len(np.asarray(record))):
+        classNum, groupNum, count = record[item][0], record[item][1], record[item][2]
+        maplist[classNum][groupNum] = count
+    for i in maplist:
+        print(maplist[i].keys())
 
 if __name__ == '__main__':
     data, rows = load_data()
@@ -203,6 +232,6 @@ if __name__ == '__main__':
     clusterResult = divide(data, distanceMatrix)
     print("聚类准确率：", evaluate(clusterResult, index), "%")
     plotWCSS(data_wcss)
-    recordResult()
+
     # plotRes(data, index)  # 原数据分布
     # plotRes(data, clusterResult)  # 聚类结果可视化
