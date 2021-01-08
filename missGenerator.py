@@ -29,34 +29,34 @@ def missGenerator(dataSet, frac, type):
         # 数据集大小对应一个缺失标记miss_mask，随机抽取missCounter个位置标记为缺失
         miss_mask = np.zeros(np.shape(dataSet), dtype=int)
         while missCounter > 0:
-            # size(x,1)获取x的行大小，randi(3)从1至3中随机取一个数
-            i = random.randint(0, np.shape(dataSet)[0] - 1)
-            j = random.randint(0, np.shape(dataSet)[1] - 1)
+            # size(x,1)获取x的行大小，random.randint(3)从1至3中随机取一个数
+            i = random.random.randintnt(0, np.shape(dataSet)[0] - 1)
+            j = random.random.randintnt(0, np.shape(dataSet)[1] - 1)
             if miss_mask[i][j] != 1:
                 miss_mask[i][j] = 1
                 missCounter = missCounter - 1
 
         print('Finished generating MCAR masks.')
 
-#     if type == 2:
+    if type == 2:
 #         # generating a random pattern of missing features s.t. features are
 #         # removed at random, depending upon the observed features (MAR)
 #         miss_tag = randperm(size(x,2)) # 返回一个包含1至n的向量
 #         x = [x(:,miss_tag(1:floor(size(x,2)/2))),x(:,miss_tag((floor(size(x,2)/2)+1):end))] # 按列打乱x
 #
 #         reln_tag = zeros(ceil(size(x,2)/2),floor(size(x,2)/2))
-#         P = randi(floor(size(x,2)/2),1,ceil(size(x,2)/2))
+#         P = random.randint(floor(size(x,2)/2),1,ceil(size(x,2)/2))
 #         for i = 1:size(reln_tag,1)
-#             reln_tag(i,P(i)) = randi(3)
+#             reln_tag(i,P(i)) = random.randint(3)
 #         end
 #         reln_tag = [reln_tag, zeros(ceil(size(x,2)/2),ceil(size(x,2)/2))]
 #
 #         miss_mask = zeros(size(x))
 #         while (missCounter>0)
-#             i = randi(size(x,1))
-#             j = randi(ceil(size(x,2)/2)) + floor(size(x,2)/2)
-#             if (miss_mask(i,j)~=1)
-#                 tag_locn = find(reln_tag((j - floor(size(x,2)/2)),:)~=0)
+#             i = random.randint(size(x,1))
+#             j = random.randint(ceil(size(x,2)/2)) + floor(size(x,2)/2)
+#             if (miss_mask[i][j]!=1)
+#                 tag_locn = find(reln_tag((j - floor(size(x,2)/2)),:)!=0)
 #                 miss_type = reln_tag((j - floor(size(x,2)/2)),tag_locn)
 #                 if (miss_type==1)
 #                     muMf = 0
@@ -71,22 +71,22 @@ def missGenerator(dataSet, frac, type):
 #                 probMiss = gaussmf(abs(x(i,tag_locn)), [sigmaMf, muMf])
 #                 probAct = rand(1)
 #                 if (probAct<=probMiss)
-#                     miss_mask(i,j) = 1
+#                     miss_mask[i][j] = 1
 #                     missCounter = missCounter - 1
 #                 end
 #             end
 #         end
 #         print('Finished generating MAR masks.')
 #
-#     if type == 3:
+    if type == 3:
 #         # generating a random pattern of missing features s.t. features are
 #         # removed based on their values only (MNAR-I)
-#         miss_type = randi(3,1,size(x,2))
+#         miss_type = random.randint(3,1,size(x,2))
 #         miss_mask = zeros(size(x))
 #         while (missCounter>0)
-#             i = randi(size(x,1))
-#             j = randi(size(x,2))
-#             if (miss_mask(i,j)~=1)
+#             i = random.randint(size(x,1))
+#             j = random.randint(size(x,2))
+#             if (miss_mask[i][j]!=1)
 #                 if (miss_type(j)==1)
 #                     muMf = 0
 #                     sigmaMf = 0.35
@@ -98,10 +98,10 @@ def missGenerator(dataSet, frac, type):
 #                     sigmaMf = 0.35
 #                 end
 #                 # 高斯曲线成员函数
-#                 probMiss = gaussmf(abs(x(i,j)), [sigmaMf, muMf])
+#                 probMiss = gaussmf(abs(x[i][j]), [sigmaMf, muMf])
 #                 probAct = rand(1)
 #                 if (probAct<=probMiss)
-#                     miss_mask(i,j) = 1
+#                     miss_mask[i][j] = 1
 #                     missCounter = missCounter - 1
 #                 end
 #             end
@@ -110,29 +110,29 @@ def missGenerator(dataSet, frac, type):
 #         clearvars -except x labels K k miss_count miss_mask alpha Loops loop type alpha
 #         print('Finished generating MNAR-I masks.')
 #
-#     if type == 4:
+    if type == 4:
 #         # generating a random pattern of missing features s.t. features are removed according to MNAR-II
 #         miss_tag = randperm(size(x,2))
 #         x = [x(:,miss_tag(1:floor(size(x,2)/2))),x(:,miss_tag((floor(size(x,2)/2)+1):end))]
 #
 #         reln_tag = zeros(ceil(size(x,2)/2),floor(size(x,2)/2)) %required for MAR missingness
-#         P = randi(floor(size(x,2)/2),1,ceil(size(x,2)/2))
+#         P = random.randint(floor(size(x,2)/2),1,ceil(size(x,2)/2))
 #         for i = 1:size(reln_tag,1)
-#             reln_tag(i,P(i)) = randi(3)
+#             reln_tag(i,P(i)) = random.randint(3)
 #         end
 #         reln_tag = [reln_tag, zeros(ceil(size(x,2)/2),ceil(size(x,2)/2))] %required for MNAR missingness
 #
-#         miss_type2 = randi(3,1,floor(size(x,2)/2))
+#         miss_type2 = random.randint(3,1,floor(size(x,2)/2))
 #
 #         miss_mask = zeros(size(x))
 #         while (missCounter>0)
 #             flag = round(rand(1))
 #             if (flag)
 #                 %dependence on observed features
-#                 i = randi(size(x,1))
-#                 j1 = randi(ceil(size(x,2)/2))
+#                 i = random.randint(size(x,1))
+#                 j1 = random.randint(ceil(size(x,2)/2))
 #                 j = j1 + floor(size(x,2)/2)
-#                 if (miss_mask(i,j)~=1)
+#                 if (miss_mask[i][j]!=1)
 #                     miss_type1 = reln_tag(j1,P(j1))
 #                     if (miss_type1==1)
 #                         muMf = 0
@@ -147,15 +147,15 @@ def missGenerator(dataSet, frac, type):
 #                     probMiss = gaussmf(abs(x(i,P(j1))), [sigmaMf, muMf])
 #                     probAct = rand(1)
 #                     if (probAct<=probMiss)
-#                         miss_mask(i,j) = 1
+#                         miss_mask[i][j] = 1
 #                         missCounter = missCounter - 1
 #                     end
 #                 end
 #             else
 #                 %dependence on unobserved features
-#                 i = randi(size(x,1))
-#                 j = randi(floor(size(x,2)/2))
-#                 if (miss_mask(i,j)~=1)
+#                 i = random.randint(size(x,1))
+#                 j = random.randint(floor(size(x,2)/2))
+#                 if (miss_mask[i][j]!=1)
 #                     if (miss_type2(j)==1)
 #                         muMf = 0
 #                         sigmaMf = 0.35
@@ -166,10 +166,10 @@ def missGenerator(dataSet, frac, type):
 #                         muMf = 2
 #                         sigmaMf = 0.35
 #                     end
-#                     probMiss = gaussmf(abs(x(i,j)), [sigmaMf, muMf])
+#                     probMiss = gaussmf(abs(x[i][j]), [sigmaMf, muMf])
 #                     probAct = rand(1)
 #                     if (probAct<=probMiss)
-#                         miss_mask(i,j) = 1
+#                         miss_mask[i][j] = 1
 #                         missCounter = missCounter - 1
 #                     end
 #                 end
