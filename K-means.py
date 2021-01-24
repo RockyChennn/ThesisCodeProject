@@ -93,7 +93,7 @@ def classfy(data, centerPoints):
     迭代收敛更新质心
     :param data: 样本集合
     :param centerPoints: 每个聚类的中心
-    :return: 误差， 新质心
+    :return: 误差, 新质心
     """
     distanceMatrix = getDistanceMatrix(data, centerPoints)
     clusterRes = divide(data, distanceMatrix)
@@ -107,7 +107,6 @@ def plotRes(data, clusterRes):
     结果可视化
     :param data:样本集
     :param clusterRes:聚类结果
-    :param k: 类个数
     :return:
     """
     nPoints = len(data)
