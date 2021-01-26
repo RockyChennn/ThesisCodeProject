@@ -19,13 +19,14 @@ data_path = data_set[2]
 data_name = re.compile('\w+').findall(data_path)[1]
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
 print("数据集名称：", data_name)
-print("数据集类别数：", k)
+
+# print("数据集类别数：", k)
 
 
 # 导入数据
 def load_data():
     points = np.loadtxt(data_path, delimiter=" ")
-    print("实例个数：", len(points))
+    # print("实例个数：", len(points))
     columns = np.shape(points)[1] - 1  # 除去分类标签为实际的特征个数
     return points, columns
 
@@ -42,7 +43,7 @@ def getDistanceMatrix(data, centerPoints):
     for i in range(len(data)):
         distanceMatrix.append([])
         for j in range(k):
-            distance = sum((data[i, :columns] - centerPoints[j, :])**2)
+            distance = sum((data[i, :] - centerPoints[j, :])**2)
             distanceMatrix[i].append(
                 math.floor(math.sqrt(distance) * 100) / 100)
     for i in range(len(distanceMatrix)):
@@ -79,7 +80,7 @@ def center(data, clusterRes):
         avg_sum = sum / len(data[idx])
         centerNow.append(avg_sum)
     centerNow = np.asarray(centerNow)
-    return centerNow[:, 0:columns]
+    return centerNow
 
 
 def classfy(data, centerPoints):
@@ -135,13 +136,27 @@ def plotWCSS(data):
     plt.show()
 
 
+def DMI(data, miss_mask):
+    '''
+    :param data: 数据集
+    :param miss_mask: 缺失分布
+    :return newdata: 缺失处理完成的数据集
+    '''
+    print("缺失标记", data)
+    newdata = data
+    return newdata
+
+
 if __name__ == '__main__':
     data, columns = load_data()
+    # 用于计算兰德指数得分
     index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
+    # 由既有的缺失标记得到缺失分布
+    miss_mask = np.loadtxt("miss_mask/MCAR-Iris-20.txt", delimiter=" ")
+    data = DMI(data[:, 0:columns], miss_mask)  # 去除索引，只留数据
     data_wcss = []  # 组内平方和变化曲线
 
-    centerPoints = np.asarray(random.sample(data[:, 0:columns].tolist(),
-                                            k))  # 随机取k个质心
+    centerPoints = np.asarray(random.sample(data.tolist(), k))  # 随机取k个质心
     err, centerNow, clusterRes = classfy(data, centerPoints)
     while np.any(abs(err) > 0.00001):
         err, centerNow, clusterRes = classfy(data, centerNow)  # 未满足收敛条件，继续聚类
@@ -150,6 +165,4 @@ if __name__ == '__main__':
 
     # 调整兰德指数计算得分基本用法
     score = metrics.adjusted_rand_score(index, clusterResult)
-    print("兰德指数", score)
-
-    # plotWCSS(data_wcss)
+    print("兰德指数得分", score)
