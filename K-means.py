@@ -5,18 +5,22 @@ import random
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
 
+from sklearn.cluster import KMeans
+from imputation import ZI, MI, kNNI
+from DMI import DMI
+# from DDM-kmeans import DDMkmeans
+
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 data_set = [
-    "data/Test=2.txt", "data/Glass=6.txt", "data/Iris=3.txt",
-    "data/Landsat=7.txt", "data/Leaf=36.txt", "data/Libras=15.txt",
-    "data/LungCancer=3.txt", "data/Seeds=3.txt", "data/Sonar=2.txt",
+    "data/Glass=6.txt", "data/Iris=3.txt", "data/Leaf=36.txt",
+    "data/Libras=15.txt", "data/LungCancer=3.txt", "data/Seeds=3.txt",
     "data/UserKnowledgeModeling=4.txt", "data/Wine=3.txt"
 ]
-data_path = data_set[2]
-
+data_path = data_set[1]
 data_name = re.compile('\w+').findall(data_path)[1]
+
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
 print("数据集名称：", data_name)
 print("数据集类别数：", k)
@@ -135,12 +139,7 @@ def plotWCSS(data):
     plt.show()
 
 
-if __name__ == '__main__':
-    data, columns = load_data()
-    index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
-    data = data[:, 0:columns] # 去除索引，只留数据
-    data_wcss = []  # 组内平方和变化曲线
-
+def startCluster(data, index):
     centerPoints = np.asarray(random.sample(data.tolist(), k))  # 随机取k个质心
     err, centerNow, clusterRes = classfy(data, centerPoints)
     while np.any(abs(err) > 0.00001):
@@ -148,6 +147,33 @@ if __name__ == '__main__':
     distanceMatrix = getDistanceMatrix(data, centerNow)
     clusterResult = divide(data, distanceMatrix)
 
+    # estimator = KMeans(n_clusters=k)  #构造聚类器
+    # estimator.fit(data)  #聚类
+    # label_pred = estimator.labels_  #获取聚类标签
+
     # 调整兰德指数计算得分基本用法
+    # score = metrics.adjusted_rand_score(index, label_pred)
     score = metrics.adjusted_rand_score(index, clusterResult)
-    print("兰德指数", score)
+    return score
+
+
+if __name__ == '__main__':
+    data, columns = load_data()
+    data_wcss = []
+    index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
+    data = data[:, 0:columns]  # 去除索引，只留数据
+    # miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
+    #                        delimiter=" ")
+    # miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
+    #    delimiter=" ")
+    miss_mask = np.loadtxt("miss_mask/MNAR/MNAR1-" + data_name + "-20.txt",
+                           delimiter=" ")
+    data[miss_mask == 1] = np.nan
+    # data = ZI(data[:, 0:columns])
+    data = MI(data[:, 0:columns])
+    # data = kNNI(data[:, 0:columns])
+    # data = DMI(data[:, 0:columns])
+
+    for i in range(20):
+        score = startCluster(data, index)
+        print(score)
