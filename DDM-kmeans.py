@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import math
 import re
 import random
@@ -9,15 +10,15 @@ plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 data_set = [
-    "data/Test=2.txt", "data/Glass=6.txt", "data/Iris=3.txt",
-    "data/Landsat=7.txt", "data/Leaf=36.txt", "data/Libras=15.txt",
-    "data/LungCancer=3.txt", "data/Seeds=3.txt", "data/Sonar=2.txt",
+    "data/Glass=6.txt", "data/Iris=3.txt", "data/Leaf=36.txt",
+    "data/Libras=15.txt", "data/LungCancer=3.txt", "data/Seeds=3.txt",
     "data/UserKnowledgeModeling=4.txt", "data/Wine=3.txt"
 ]
-data_path = data_set[2]
+data_path = data_set[3]
 
 data_name = re.compile('\w+').findall(data_path)[1]
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
+a = 0.25  # 惩罚项的加权系数
 print("数据集名称：", data_name)
 print("数据集类别数：", k)
 
@@ -32,7 +33,7 @@ def load_data():
 
 def getDistanceMatrix(data, centerPoints):
     """
-    计算质点与各个聚类中心的距离，用于后续为每个实例进行分类
+    计算实例与各个聚类中心的距离，用于后续为每个实例进行分类
     :param data: 样本点
     :param centerPoints: 质点集合
     :return: 质心与样本点距离矩阵和组内平方和
@@ -42,9 +43,14 @@ def getDistanceMatrix(data, centerPoints):
     for i in range(len(data)):
         distanceMatrix.append([])
         for j in range(k):
-            distance = sum((data[i, :columns] - centerPoints[j, :])**2)
-            distanceMatrix[i].append(
-                math.floor(math.sqrt(distance) * 100) / 100)
+            distance = 0
+            now = data[i, :]
+            for n in range(columns):
+                if pd.isnull(now[n]):
+                    distance += a * var[n]
+                else:
+                    distance += (np.abs(data[i, n] - centerPoints[j, n]))**2
+            distanceMatrix[i].append(math.sqrt(distance))
     for i in range(len(distanceMatrix)):
         wcss += min(distanceMatrix[i])**2
     data_wcss.append(wcss)
@@ -75,9 +81,8 @@ def center(data, clusterRes):
     for i in range(k):
         # 计算每个组的新质心
         idx = np.where(clusterRes == i)
-        sum = data[idx].sum(axis=0)
-        avg_sum = sum / len(data[idx])
-        centerNow.append(avg_sum)
+        matrix, mean, var = getMissInfo(data[idx])
+        centerNow.append(mean)
     centerNow = np.asarray(centerNow)
     return centerNow[:, 0:columns]
 
@@ -135,13 +140,49 @@ def plotWCSS(data):
     plt.show()
 
 
-if __name__ == '__main__':
-    data, columns = load_data()
-    index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
-    data_wcss = []  # 组内平方和变化曲线
+def getMissInfo(data):
+    '''
+        获取缺失数据集的信息，返回缺失值标记矩阵、均值和方差
+        均值用于初始化中心点，随机选取的中心点可能会包含缺失值
+        标准差var用于作为惩罚项
+    '''
+    columns = np.shape(data)[1]
+    flagMatrix = pd.isnull(data)
+    mean = []
+    var = []
+    # 计算每列的均值以及标准差
+    for i in range(columns):
+        column = data[:, i][flagMatrix[:, i] == False]
+        if np.sum(flagMatrix[:, i] == False) == 0:
+            var.append(0)
+            mean.append(0)
+        else:
+            var.append(np.round(np.var(column), 3))
+            mean.append(
+                np.round(
+                    np.sum(column) / np.sum(flagMatrix[:, i] == False), 3))
+    return flagMatrix, mean, var
 
-    centerPoints = np.asarray(random.sample(data[:, 0:columns].tolist(),
-                                            k))  # 随机取k个质心
+
+def getInitPoints():
+    '''
+        初始化聚类中心，如果中心包含缺失值则用该维特征的均值来填充
+        :return:
+    '''
+    center = np.asarray(random.sample(data[:, 0:columns].tolist(), k))
+    flagMatrix, mean, var = getMissInfo(center)
+    for i in range(k):
+        for j in range(columns):
+            if flagMatrix[i, j]:
+                center[i, j] = mean[j]
+    return center
+
+
+def startCluster(data, index):
+    # 初始化中心点
+    centerPoints = getInitPoints()  # 随机取k个质心
+    # centerPoints = np.asarray(
+    #     ([6.0, 2.9, 4.5, 1.5], [5.1, 3.8, 1.5, 0.3], [6.3, 3.4, 5.6, 2.4]))
     err, centerNow, clusterRes = classfy(data, centerPoints)
     while np.any(abs(err) > 0.00001):
         err, centerNow, clusterRes = classfy(data, centerNow)  # 未满足收敛条件，继续聚类
@@ -150,6 +191,32 @@ if __name__ == '__main__':
 
     # 调整兰德指数计算得分基本用法
     score = metrics.adjusted_rand_score(index, clusterResult)
-    print("兰德指数", score)
+    return score
+
+
+if __name__ == '__main__':
+    data_wcss = []  # 组内平方和变化曲线
+    data, columns = load_data()
+    index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
+    data = data[:, 0:columns]  # 去除索引，只留数据
+    btn = 1
+    if btn == 0:
+        miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MAR")
+    elif btn == 1:
+        miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MCAR")
+    else:
+        miss_mask = np.loadtxt("miss_mask/MNAR/MNAR2-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MNAR")
+    data[miss_mask == 1] = np.nan
+
+    flagMatrix, mean, var = getMissInfo(data)
+    for i in range(20):
+        score = startCluster(data, index)
+        print(score)
 
     # plotWCSS(data_wcss)
