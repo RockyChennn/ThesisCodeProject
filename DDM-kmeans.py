@@ -11,10 +11,10 @@ plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 data_set = [
     "data/Glass=6.txt", "data/Iris=3.txt", "data/Leaf=36.txt",
-    "data/Libras=15.txt", "data/LungCancer=3.txt", "data/Seeds=3.txt",
+    "data/LungCancer=3.txt", "data/Libras=15.txt", "data/Seeds=3.txt",
     "data/UserKnowledgeModeling=4.txt", "data/Wine=3.txt"
 ]
-data_path = data_set[3]
+data_path = data_set[5]
 
 data_name = re.compile('\w+').findall(data_path)[1]
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
@@ -169,20 +169,22 @@ def getInitPoints():
         初始化聚类中心，如果中心包含缺失值则用该维特征的均值来填充
         :return:
     '''
-    center = np.asarray(random.sample(data[:, 0:columns].tolist(), k))
-    flagMatrix, mean, var = getMissInfo(center)
+    # center = np.asarray(random.sample(data[:, 0:columns].tolist(), k))
+    # flagMatrix, mean, var = getMissInfo(center)
+    # for i in range(k):
+    #     for j in range(columns):
+    #         if flagMatrix[i, j]:
+    #             center[i, j] = mean[j]
+    center = np.asarray(random.sample(data_copy[:, 0:columns].tolist(), k))
     for i in range(k):
-        for j in range(columns):
-            if flagMatrix[i, j]:
-                center[i, j] = mean[j]
+        idx = np.where(index == i)
+        center[i] = np.asarray(random.sample(data_copy[idx].tolist(), 1))
     return center
 
 
 def startCluster(data, index):
     # 初始化中心点
     centerPoints = getInitPoints()  # 随机取k个质心
-    # centerPoints = np.asarray(
-    #     ([6.0, 2.9, 4.5, 1.5], [5.1, 3.8, 1.5, 0.3], [6.3, 3.4, 5.6, 2.4]))
     err, centerNow, clusterRes = classfy(data, centerPoints)
     while np.any(abs(err) > 0.00001):
         err, centerNow, clusterRes = classfy(data, centerNow)  # 未满足收敛条件，继续聚类
@@ -197,24 +199,32 @@ def startCluster(data, index):
 if __name__ == '__main__':
     data_wcss = []  # 组内平方和变化曲线
     data, columns = load_data()
+    data_copy, columns = load_data()
     index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
     data = data[:, 0:columns]  # 去除索引，只留数据
-    btn = 1
+    data_copy = data_copy[:, 0:columns]  # 去除索引，只留数据
+
+    btn = 0
     if btn == 0:
         miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
                                delimiter=" ")
         print("MAR")
+        print("DDM-kmeans")
     elif btn == 1:
         miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
                                delimiter=" ")
         print("MCAR")
+        print("DDM-kmeans")
     else:
         miss_mask = np.loadtxt("miss_mask/MNAR/MNAR2-" + data_name + "-20.txt",
                                delimiter=" ")
         print("MNAR")
+        print("DDM-kmeans")
     data[miss_mask == 1] = np.nan
 
     flagMatrix, mean, var = getMissInfo(data)
+    score = startCluster(data, index)
+
     for i in range(20):
         score = startCluster(data, index)
         print(score)

@@ -8,17 +8,17 @@ import sklearn.metrics as metrics
 from sklearn.cluster import KMeans
 from imputation import ZI, MI, kNNI
 from DMI import DMI
-# from DDM-kmeans import DDMkmeans
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 data_set = [
     "data/Glass=6.txt", "data/Iris=3.txt", "data/Leaf=36.txt",
-    "data/Libras=15.txt", "data/LungCancer=3.txt", "data/Seeds=3.txt",
+    "data/LungCancer=3.txt", "data/Libras=15.txt", "data/Seeds=3.txt",
     "data/UserKnowledgeModeling=4.txt", "data/Wine=3.txt"
 ]
-data_path = data_set[1]
+data_path = data_set[7]
+
 data_name = re.compile('\w+').findall(data_path)[1]
 
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
@@ -47,8 +47,7 @@ def getDistanceMatrix(data, centerPoints):
         distanceMatrix.append([])
         for j in range(k):
             distance = sum((data[i, :] - centerPoints[j, :])**2)
-            distanceMatrix[i].append(
-                math.floor(math.sqrt(distance) * 100) / 100)
+            distanceMatrix[i].append(np.round(distance, 3))
     for i in range(len(distanceMatrix)):
         wcss += min(distanceMatrix[i])**2
     data_wcss.append(wcss)
@@ -80,7 +79,10 @@ def center(data, clusterRes):
         # 计算每个组的新质心
         idx = np.where(clusterRes == i)
         sum = data[idx].sum(axis=0)
-        avg_sum = sum / len(data[idx])
+        if len(data[idx]) == 0:
+            avg_sum = 0
+        else:
+            avg_sum = sum / len(data[idx])
         centerNow.append(avg_sum)
     centerNow = np.asarray(centerNow)
     return centerNow
@@ -141,6 +143,8 @@ def plotWCSS(data):
 
 def startCluster(data, index):
     centerPoints = np.asarray(random.sample(data.tolist(), k))  # 随机取k个质心
+    # centerPoints = np.asarray(
+    #     ([6.0, 2.9, 4.5, 1.5], [5.1, 3.8, 1.5, 0.3], [6.3, 3.4, 5.6, 2.4]))
     err, centerNow, clusterRes = classfy(data, centerPoints)
     while np.any(abs(err) > 0.00001):
         err, centerNow, clusterRes = classfy(data, centerNow)  # 未满足收敛条件，继续聚类
@@ -153,8 +157,9 @@ def startCluster(data, index):
 
     # 调整兰德指数计算得分基本用法
     # score = metrics.adjusted_rand_score(index, label_pred)
-    score = metrics.adjusted_rand_score(index, clusterResult)
-    return score
+    ARI = metrics.adjusted_rand_score(index, clusterResult)
+    NMI = metrics.normalized_mutual_info_score(index, clusterResult)
+    return ARI, NMI
 
 
 if __name__ == '__main__':
@@ -162,18 +167,38 @@ if __name__ == '__main__':
     data_wcss = []
     index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
     data = data[:, 0:columns]  # 去除索引，只留数据
-    # miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
-    #                        delimiter=" ")
-    # miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
-    #    delimiter=" ")
-    miss_mask = np.loadtxt("miss_mask/MNAR/MNAR1-" + data_name + "-20.txt",
-                           delimiter=" ")
+
+    groupID = 2  # ZI/MI/kNNI/DMI
+    typeID = 1  # MAR/MCAR/MNAR
+    mode = 20  # 20
+
+    if typeID == 1:
+        miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MAR")
+    elif typeID == 2:
+        miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MCAR")
+    else:
+        miss_mask = np.loadtxt("miss_mask/MNAR/MNAR2-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MNAR")
     data[miss_mask == 1] = np.nan
-    # data = ZI(data[:, 0:columns])
-    data = MI(data[:, 0:columns])
-    # data = kNNI(data[:, 0:columns])
-    # data = DMI(data[:, 0:columns])
+
+    if groupID == 1:
+        print("ZI")
+        data = ZI(data[:, 0:columns])
+    elif groupID == 2:
+        print("MI")
+        data = MI(data[:, 0:columns])
+    elif groupID == 3:
+        print("kNNI")
+        data = kNNI(data[:, 0:columns])
+    else:
+        print("DMI")
+        data = DMI(data[:, 0:columns])
 
     for i in range(20):
-        score = startCluster(data, index)
-        print(score)
+        ARI, NMI = startCluster(data, index)
+        print(ARI)

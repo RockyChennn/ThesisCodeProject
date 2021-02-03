@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+a = 0.5
+
 
 def DMI(data):
     '''
@@ -13,9 +15,12 @@ def DMI(data):
     std = []  # [0.099, 0.25, 0.0, 0.0]
     for i in range(columns):
         column = data[:, i][flagMatrix[:, i] == False]
-        mean.append(
-            np.round(np.sum(column) / np.sum(flagMatrix[:, i] == False), 3))
-        std.append(np.round(np.std(column), 3))
+        if np.sum(flagMatrix[:, i] == False) == 0:
+            mean.append(0)
+            std.append(0)
+        else:
+            mean.append(np.sum(column) / np.sum(flagMatrix[:, i] == False))
+            std.append(np.std(column))
     for i in range(rows):
         for j in range(columns):
             if (flagMatrix[i, j] == True):
@@ -29,9 +34,9 @@ def DMI(data):
                             left += 1
                 # print(i, j, left, right)
                 if left > right:
-                    data[i, j] = mean[j] - std[j]
+                    data[i, j] = mean[j] - a * std[j]
                 elif left < right:
-                    data[i, j] = mean[j] + std[j]
+                    data[i, j] = mean[j] + a * std[j]
                 else:
                     data[i, j] = mean[j]
     return data
