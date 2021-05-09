@@ -7,7 +7,7 @@ import sklearn.metrics as metrics
 
 from sklearn.cluster import KMeans
 from imputation import ZI, MI, kNNI
-from AMI import AMI
+from DMI import DMI
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -17,7 +17,7 @@ data_set = [
     "data/LungCancer=3.txt", "data/Libras=15.txt", "data/Seeds=3.txt",
     "data/UserKnowledgeModeling=4.txt", "data/Wine=3.txt"
 ]
-data_path = data_set[1]
+data_path = data_set[4]
 
 data_name = re.compile('\w+').findall(data_path)[1]
 
@@ -168,41 +168,27 @@ if __name__ == '__main__':
     index = np.asarray(list(map(int, np.asarray(data[:, columns]) - 1)))
     data = data[:, 0:columns]  # 去除索引，只留数据
 
-    groupID = 4  # ZI/MI/kNNI/AMI
-    typeID = 2  # MAR/MCAR/MNAR
+    typeID = 1  # MAR/MCAR/MNAR
     mode = 20  # 20
 
     if typeID == 1:
-        miss_mask = np.loadtxt("miss_mask//MAR/MAR-" + data_name + "-40.txt",
+        miss_mask = np.loadtxt("miss_mask/Libras/MAR/MAR-Iris-5.txt",
                                delimiter=" ")
         print("MAR")
     elif typeID == 2:
-        miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name +
-                               "-10.txt",
+        miss_mask = np.loadtxt("miss_mask/Libras/MCAR/MCAR-Iris-5.txt",
                                delimiter=" ")
         print("MCAR")
     else:
-        miss_mask = np.loadtxt("miss_mask/MNAR/MNAR2-" + data_name + "-20.txt",
+        miss_mask = np.loadtxt("miss_mask/Libras/MNAR/MNAR-Iris-5.txt",
                                delimiter=" ")
         print("MNAR")
     data[miss_mask == 1] = np.nan
 
-    if groupID == 1:
-        print("ZI")
-        data = ZI(data[:, 0:columns])
-    elif groupID == 2:
-        print("MI")
-        data = MI(data[:, 0:columns])
-    elif groupID == 3:
-        print("kNNI")
-        data = kNNI(data[:, 0:columns])
-    else:
-        print("AMI")
-        data = AMI(data[:, 0:columns])
+    print("kNNI")
+    data = kNNI(data[:, 0:columns])
 
-    # ARI, NMI = startCluster(data, index)
+    ARI, NMI = startCluster(data, index)
     for i in range(20):
         ARI, NMI = startCluster(data, index)
         print(ARI)
-    # plotWCSS(data_wcss)
-    # print(data_wcss)

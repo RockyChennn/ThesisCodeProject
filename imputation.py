@@ -20,7 +20,7 @@ def MI(data):
 
 
 def kNNI(data):
-    imputer = KNNImputer(missing_values=np.nan, n_neighbors=3)
+    imputer = KNNImputer(missing_values=np.nan, n_neighbors=2)
     imputer.fit(data)
     return imputer.transform(data)
 

@@ -5,7 +5,6 @@ import re
 import random
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
-import time
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -15,11 +14,11 @@ data_set = [
     "data/LungCancer=3.txt", "data/Libras=15.txt", "data/Seeds=3.txt",
     "data/UserKnowledgeModeling=4.txt", "data/Wine=3.txt"
 ]
-data_path = data_set[1]
+data_path = data_set[4]
 
 data_name = re.compile('\w+').findall(data_path)[1]
 k = int(re.compile('\w+').findall(data_path)[2])  # 从 data_path 中读取类别个数
-a = 0.25 # 惩罚项的加权系数
+# a = 0.25  # 惩罚项的加权系数
 print("数据集名称：", data_name)
 print("数据集类别数：", k)
 
@@ -27,9 +26,9 @@ print("数据集类别数：", k)
 # 导入数据
 def load_data():
     points = np.loadtxt(data_path, delimiter=" ")
+    print("实例个数：", len(points))
     columns = np.shape(points)[1] - 1  # 除去分类标签为实际的特征个数
     return points, columns
-
 
 def getDistanceMatrix(data, centerPoints):
     """
@@ -45,12 +44,13 @@ def getDistanceMatrix(data, centerPoints):
         for j in range(k):
             distance = 0
             now = data[i, :]
+            count = 0
             for n in range(columns):
                 if pd.isnull(now[n]):
-                    distance += a * var[n]
+                    count += 1
                 else:
                     distance += (np.abs(data[i, n] - centerPoints[j, n]))**2
-            distanceMatrix[i].append(math.sqrt(distance))
+            distanceMatrix[i].append(math.sqrt(distance * columns / (columns - count)))
     for i in range(len(distanceMatrix)):
         wcss += min(distanceMatrix[i])**2
     data_wcss.append(wcss)
@@ -197,8 +197,6 @@ def startCluster(data, index):
 
 
 if __name__ == '__main__':
-    start = time.time()
-
     data_wcss = []  # 组内平方和变化曲线
     data, columns = load_data()
     data_copy, columns = load_data()
@@ -206,49 +204,30 @@ if __name__ == '__main__':
     data = data[:, 0:columns]  # 去除索引，只留数据
     data_copy = data_copy[:, 0:columns]  # 去除索引，只留数据
 
-    btn = 0
-    # btn = 1
-    # btn = 2
-
-    # if btn == 0:
-    #     miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
-    #                            delimiter=" ")
-    #     print("MAR")
-    #     print("DDM-kmeans")
-    # elif btn == 1:
-    #     miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
-    #                            delimiter=" ")
-    #     print("MCAR")
-    #     print("DDM-kmeans")
-    # else:
-    #     miss_mask = np.loadtxt("miss_mask/MNAR/MNAR2-" + data_name + "-20.txt",
-    #                            delimiter=" ")
-    #     print("MNAR")
-    #     print("DDM-kmeans")
-    # miss_mask = np.loadtxt("miss_mask/Iris/MAR/MAR-Iris-10.txt",
-    #                            delimiter=" ")
-    miss_mask = np.loadtxt("miss_mask/Iris/MCAR/MCAR-Iris-20.txt",
+    btn = 2
+    if btn == 0:
+        miss_mask = np.loadtxt("miss_mask/MAR/MAR-" + data_name + "-20.txt",
                                delimiter=" ")
-    # miss_mask = np.loadtxt("miss_mask/Iris/MNAR/MNAR-Iris-10.txt",
-    #                            delimiter=" ")
+        print("MAR")
+        print("PDS-kmeans")
+    elif btn == 1:
+        miss_mask = np.loadtxt("miss_mask/MCAR/MCAR-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MCAR")
+        print("PDS-kmeans")
+    else:
+        miss_mask = np.loadtxt("miss_mask/MNAR/MNAR2-" + data_name + "-20.txt",
+                               delimiter=" ")
+        print("MNAR")
+        print("PDS-kmeans")
     data[miss_mask == 1] = np.nan
 
     flagMatrix, mean, var = getMissInfo(data)
-    print("均值",mean)
-    print("标准差",var)
-    # score = startCluster(data, index)
-    result = []
+    score = startCluster(data, index)
 
-    for i in range(50):
+    for i in range(20):
         score = startCluster(data, index)
-        result.append(score)
-        # print(score)
-    print("加权系数a=", a)
-    print("50次平均成绩",np.mean(result))
-    print("50次成绩最大值",np.max(result))
-    print("50次成绩最小值",np.min(result))
-    print("运行结束，耗时：",time.time() - start)
-    # score = startCluster(data, index)
-    # print(score)
+        print(score)
+
     # plotWCSS(data_wcss)
     # print(data_wcss)

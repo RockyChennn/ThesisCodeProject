@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
 
-a = 0.5
+a = 1
 
-
-def DMI(data):
+def AMI(data):
     '''
         计算出每列的均值和方差
     '''
@@ -21,6 +20,8 @@ def DMI(data):
         else:
             mean.append(np.sum(column) / np.sum(flagMatrix[:, i] == False))
             std.append(np.std(column))
+    print("标准差", std)
+    print("均值", mean)
     for i in range(rows):
         for j in range(columns):
             if (flagMatrix[i, j] == True):
@@ -41,7 +42,6 @@ def DMI(data):
                     data[i, j] = mean[j]
     return data
 
-
 # 导入数据
 def load_data():
     miss_mask = np.loadtxt("miss_mask/MCAR-Iris-20.txt", delimiter=" ")
@@ -55,5 +55,5 @@ if __name__ == '__main__':
     data, columns, miss_mask = load_data()
     data = data[:, 0:columns]
     data[miss_mask == 1] = np.nan
-    # DMI(data)
-    print(DMI(data))
+    # AMI(data)
+    print(AMI(data))
